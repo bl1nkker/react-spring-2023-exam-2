@@ -1,7 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import s from "./Clock.module.css";
 const Clock = (props) => {
+  const [time, setTime] = useState(0);
+  const [formattedTime, setFormattedTime] = useState("00:00:01");
+  const [isRunning, setIsRunning] = useState(false);
+  const intervalRef = useRef(null);
   const [opt, setOpt] = useState();
+
+  useEffect(() => {
+    if (isRunning) {
+      intervalRef.current = setInterval(() => {
+        setTime((prevTime) => prevTime - 1);
+        setFormattedTime(formatTime(time));
+      }, 1000);
+    } else {
+      clearInterval(intervalRef.current);
+    }
+
+    return () => {
+      clearInterval(intervalRef.current);
+    };
+  }, [isRunning]);
+
+  const handleStart = () => {
+    setIsRunning(true);
+  };
+
+  const handleReset = () => {
+    // setTime(0);
+    setIsRunning(false);
+  };
+
+  const changeTime = (value) => {
+    const newTime = parseInt(value) * 86400;
+    setTime(newTime);
+    setIsRunning(false);
+  };
+
+  const formatTime = (timeInSeconds) => {
+    const days = Math.floor(timeInSeconds / 86400);
+    const hours = Math.floor((timeInSeconds % 86400) / 3600);
+    const minutes = Math.floor(((timeInSeconds % 86400) % 3600) / 60);
+    const seconds = Math.floor(((timeInSeconds % 86400) % 3600) % 60);
+    setTimeFromOpt();
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  };
 
   const clockCycle = (dayTime) => {
     console.log("inClockCycle");
@@ -27,6 +70,7 @@ const Clock = (props) => {
       console.log(props.time);
     }
   };
+
   const setTimeFromOpt = () => {
     console.log("inFromOpt");
     let dayTime;
@@ -60,24 +104,28 @@ const Clock = (props) => {
         props.setTime(dayTime);
         break;
     }
-    clockCycle(dayTime);
+    clockCycle("00:00:00");
   };
 
   return (
     <div className={s.clockComponent}>
       <div className={s.circle}>
-        <div className={s.time}>{props.time}</div>
+        <p>{formatTime(time)}</p>
       </div>
-      <select onChange={(e) => setOpt(e.target.value)}>
-        <option value="1 Day">1 Day</option>
-        <option value="2 Day">2 Day</option>
-        <option value="3 Day">3 Day</option>
-        <option value="4 Day">4 Day</option>
-        <option value="5 Day">5 Day</option>
-        <option value="6 Day">6 Day</option>
-        <option value="7 Day">7 Day</option>
+      <select onChange={(e) => changeTime(e.target.value)}>
+        <option defaultValue="0" disabled selected>
+          Choose Time
+        </option>
+        <option value="1">1 Day</option>
+        <option value="2">2 Day</option>
+        <option value="3">3 Day</option>
+        <option value="4">4 Day</option>
+        <option value="5">5 Day</option>
+        <option value="6">6 Day</option>
+        <option value="7">7 Day</option>
       </select>
-      <button onClick={setTimeFromOpt}>Go!</button>
+      <button onClick={handleStart}>Go!</button>
+      <button onClick={handleReset}>Stop!</button>
     </div>
   );
 };
